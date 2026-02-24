@@ -145,7 +145,7 @@ Milly is a personal, single-user, local tool. It is not a production API. The th
 ### Install
 
 ```bash
-git clone https://github.com/yourusername/milly
+git clone https://github.com/m0rs3c0d3/milly
 cd milly
 pip install -r requirements.txt
 ```
