@@ -32,6 +32,16 @@ SUPPORTED_EXTENSIONS = {
     ".csv", ".log", ".pdf",
 }
 
+# Storage cap: how many chars of content to keep in the JSON index.
+# Larger than the retrieval cap so the index entry is useful for future
+# tooling (e.g. a /showdoc command) without bloating the index excessively.
+_MAX_STORED_CHARS = 10_000
+
+# Retrieval cap: how many chars of a document to inject into the model's
+# context window per result.  top_k=3 × 2 000 = 6 000 chars of RAG context,
+# which leaves comfortable headroom in a typical 4k–8k local model context.
+_MAX_RETRIEVAL_CHARS = 2_000
+
 
 class RAG:
     def __init__(
@@ -137,7 +147,7 @@ class RAG:
             "id": self._doc_id(path),
             "path": str(path),
             "name": path.name,
-            "content": content[:10_000],   # cap stored content
+            "content": content[:_MAX_STORED_CHARS],
             "token_freq": freq,
             "token_count": len(tokens),
         }
@@ -267,8 +277,8 @@ class RAG:
         for i, doc in enumerate(docs, 1):
             lines.append(f"--- Document {i}: {doc['name']} ---")
             content: str = doc.get("content", "")
-            if len(content) > 10_000:
-                content = content[:10_000] + "\n[... content truncated ...]"
+            if len(content) > _MAX_RETRIEVAL_CHARS:
+                content = content[:_MAX_RETRIEVAL_CHARS] + "\n[... content truncated ...]"
             lines.append(content)
             lines.append("")
         lines.append("[END UNTRUSTED DOCUMENT CONTENT]")
