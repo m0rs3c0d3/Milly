@@ -137,7 +137,7 @@ class RAG:
             "id": self._doc_id(path),
             "path": str(path),
             "name": path.name,
-            "content": content[:60_000],   # cap stored content
+            "content": content[:10_000],   # cap stored content
             "token_freq": freq,
             "token_count": len(tokens),
         }
@@ -267,8 +267,8 @@ class RAG:
         for i, doc in enumerate(docs, 1):
             lines.append(f"--- Document {i}: {doc['name']} ---")
             content: str = doc.get("content", "")
-            if len(content) > 2_000:
-                content = content[:2_000] + "\n[... content truncated ...]"
+            if len(content) > 10_000:
+                content = content[:10_000] + "\n[... content truncated ...]"
             lines.append(content)
             lines.append("")
         lines.append("[END UNTRUSTED DOCUMENT CONTENT]")

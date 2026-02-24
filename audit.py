@@ -31,7 +31,15 @@ class AuditLog:
             f.write(json.dumps(entry) + "\n")
 
     def get_session_events(self, session_id: str) -> list[dict]:
-        """Return all log entries for a given session."""
+        """
+        Return all log entries for a given session.
+
+        # TODO: This performs a full linear scan of the entire log file on every
+        # call. Fine for small logs; gets slow as the log grows across many
+        # sessions over months of use. Consider building an in-memory session
+        # index on first read (dict mapping session_id → list[line_offset]) and
+        # invalidating it when the file grows, or rotating logs by session.
+        """
         events: list[dict] = []
         if not self.log_path.exists():
             return events

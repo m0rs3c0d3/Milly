@@ -115,6 +115,10 @@ def cmd_status(engine: ChatEngine) -> None:
     table.add_row("Injection detection", str(s["guardian_injection_detection"]))
     table.add_row("Output sanitization", str(s["guardian_output_sanitization"]))
     table.add_row("Temperature", str(s["temperature"]))
+    table.add_row(
+        "Guardian (clean / flagged / blocked)",
+        f"{s['guardian_clean']} / {s['guardian_flagged']} / {s['guardian_blocked']}",
+    )
     console.print(Panel(table, title="[bold]Status[/bold]", border_style="green"))
 
 
