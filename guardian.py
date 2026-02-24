@@ -61,7 +61,7 @@ class Guardian:
         # Persona hijacking
         (r"you\s+are\s+now\s+(?!milly\b)", "persona_override"),
         (r"pretend\s+(that\s+)?you\s+are\b", "persona_override"),
-        (r"act\s+as\s+(if\s+you\s+(were|are)\s+)?(?!a\s+helpful\b)(?!milly\b)", "persona_override"),
+        (r"act\s+as\b", "persona_override"),
         (r"roleplay\s+as\b", "persona_override"),
         (r"simulate\s+(being\s+)?(?!milly\b)", "persona_override"),
         # System prompt injection via delimiter spoofing
@@ -95,6 +95,9 @@ class Guardian:
         (r"\[prompt\s+injection\]", "indirect_injection"),
         (r"<\s*injection\s*>", "indirect_injection"),
         (r"<!-- inject", "indirect_injection"),
+        # Markdown-formatted injection (common in document poisoning attacks)
+        (r"#{1,6}\s*(new\s+instructions?|system\s*(prompt|override))\b", "indirect_injection"),
+        (r"\*{1,2}\s*(system\s*(override|prompt)|new\s+instructions?)\s*\*{1,2}", "indirect_injection"),
     ]
 
     # Dangerous characters: control chars, zero-width, RTL overrides, terminal escapes
@@ -126,6 +129,9 @@ class Guardian:
             for pattern, name in self.INJECTION_PATTERNS
         ]
 
+        # Lifetime detection counts for this instance (chat turns only, not doc scans)
+        self._stats: dict[str, int] = {"blocked": 0, "flagged": 0, "clean": 0}
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -147,6 +153,7 @@ class Guardian:
                 f"Input exceeds maximum length "
                 f"({len(user_input)} chars > {self.max_length} limit)"
             )
+            self._stats["blocked"] += 1
             return result
 
         # 2. Character sanitization (before injection scan to remove evasion tricks)
@@ -162,6 +169,10 @@ class Guardian:
                     break
 
         result.sanitized_input = sanitized
+        if result.flagged:
+            self._stats["flagged"] += 1
+        else:
+            self._stats["clean"] += 1
         return result
 
     def scan_document(self, content: str) -> GuardianResult:
@@ -171,7 +182,7 @@ class Guardian:
         Only scans the first 20 000 chars to bound CPU usage.
         """
         result = GuardianResult()
-        result.input_hash = self._hash(content[:512])  # hash prefix for audit
+        result.input_hash = self._hash(content[:8192])  # hash prefix for audit
 
         sanitized = self._strip_dangerous(content)
 
@@ -194,6 +205,17 @@ class Guardian:
         cleaned = self._ANSI_ESCAPE.sub("", text)
         cleaned = self._strip_dangerous(cleaned)
         return cleaned
+
+    def stats(self) -> dict:
+        """
+        Return lifetime detection counts for this Guardian instance.
+
+        Counts only check() calls (chat turns). scan_document() is excluded
+        because document ingestion is a separate operation from chat turns.
+
+        Returns a copy — mutating the result does not affect internal state.
+        """
+        return dict(self._stats)
 
     # ------------------------------------------------------------------
     # Helpers
