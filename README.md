@@ -168,7 +168,7 @@ python main.py
 
 ## Configuration
 
-Everything lives in `config.yaml`. Key settings:
+Operational settings live in `config.yaml`:
 
 ```yaml
 model: "llama3.2"          # any Ollama model
@@ -189,6 +189,8 @@ rag:
   max_file_size_mb: 10
   scan_for_injection: true
 ```
+
+**Security-sensitive instructions live in `system_prompt.txt`** (project root). Edit this file to customise Milly's persona and behaviour. It is loaded at startup and its permissions are automatically set to `0o600` — keeping the security policy separate from the operational config you're meant to edit freely. `config.yaml` is used as a fallback only if `system_prompt.txt` is absent.
 
 ---
 
@@ -213,18 +215,20 @@ rag:
 
 ```
 milly/
-├── main.py            # CLI entry point
-├── chat.py            # Conversation engine
-├── guardian.py        # Security layer (standalone importable)
-├── rag.py             # Document ingestion + retrieval
-├── memory.py          # HMAC-signed persistent history
-├── audit.py           # Structured security event logging
-├── config.yaml        # All configuration
-├── docs/              # Drop your documents here
-├── memory/            # Auto-created: signed history + vector DB
-├── logs/              # Auto-created: security audit log
-├── COMPLIANCE.md      # NIST AI RMF mapping
-└── THREAT_MODEL.md    # Full threat model documentation
+├── main.py              # CLI entry point
+├── chat.py              # Conversation engine
+├── guardian.py          # Security layer (standalone importable)
+├── rag.py               # Document ingestion + retrieval
+├── memory.py            # HMAC-signed persistent history
+├── audit.py             # Structured security event logging
+├── config.yaml          # Operational config (model, temperature, limits)
+├── system_prompt.txt    # Milly's security-sensitive instructions (0o600)
+├── test_guardian.py     # Guardian test suite
+├── docs/                # Drop your documents here
+├── memory/              # Auto-created: signed history + RAG index
+├── logs/                # Auto-created: security audit log
+├── COMPLIANCE.md        # NIST AI RMF mapping
+└── THREAT_MODEL.md      # Full threat model documentation
 ```
 
 ---
