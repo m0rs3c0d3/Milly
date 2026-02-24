@@ -204,7 +204,7 @@ class ChatEngine:
     # ------------------------------------------------------------------
 
     def status(self) -> dict:
-        return {
+        s = {
             "model": self.model,
             "session_id": self.session_id,
             "history_turns": len(self.history) // 2,
@@ -214,3 +214,5 @@ class ChatEngine:
             "guardian_output_sanitization": self.guardian.output_sanitization,
             "temperature": self.temperature,
         }
+        s.update({"guardian_" + k: v for k, v in self.guardian.stats().items()})
+        return s
